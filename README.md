@@ -1,1 +1,1 @@
-# gormStudy
+# databaseStudy
