@@ -1,0 +1,33 @@
+# package
+# log
+./log/*
+*.log
+**.DS_Store
+
+# release config
+server/config/config.yaml
+
+# nacos cache log
+server/nacos
+
+
+# IDE config
+../.idea
+.vscode
+vendor
+.idea
+
+
+# binary
+bin/*
+cover*
+/sync_test.sh
+server/bin
+venv
+
+server/conf/credentials.json
+server/conf/token.json
+server/config/luban
+server/luban
+
+*.xlsx
