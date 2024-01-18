@@ -22,6 +22,13 @@ func Create() {
 	fmt.Println("Create finished")
 }
 
+func Save() {
+	mysqlClient.Save(&Student{Model: gorm.Model{ID: 1}, Name: "jack", Age: 23})
+
+	fmt.Println("Save finished")
+
+}
+
 func CreateWithSelect() {
 	s := &Student{
 		Name:    "mike",

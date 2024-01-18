@@ -23,3 +23,8 @@ func (u *Student) AfterCreate(tx *gorm.DB) (err error) {
 	fmt.Println("Student AfterCreate")
 	return nil
 }
+
+type City struct {
+	Id   string `gorm:"column:id;comment:主键"`
+	Name string `gorm:"column:name"`
+}

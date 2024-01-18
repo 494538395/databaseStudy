@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"time"
+
+	"database-study/mysql/grom/model"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -18,6 +22,8 @@ var (
 	testDBName    = "jerry"
 )
 
+var globalCtx = context.Background()
+
 func init() {
 	// 1.连接默认库
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=true&loc=Local",
@@ -28,11 +34,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	sqlDB, err := preDB.DB()
-	if err != nil {
-		panic(err)
-	}
-	defer sqlDB.Close()
 
 	// 2.创建测试库
 	sql := fmt.Sprintf(
@@ -54,9 +55,9 @@ func init() {
 		panic(err)
 	}
 	// 4.自动迁移
-	mysqlClient.AutoMigrate(&Student{})
+	mysqlClient.AutoMigrate(&model.Person{})
 
-	sqlDB, err = mysqlClient.DB()
+	sqlDB, err := mysqlClient.DB()
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +68,30 @@ func init() {
 
 func main() {
 	fmt.Println("MySQL started")
-	FirstOrCreate()
-	//CreateInBatch()
-	//Find()
+
+	personDB := model.NewPersonDB(mysqlClient)
+
+	//personDB.CreateWithSelect(globalCtx, &model.Person{
+	//	Name:    "jerry",
+	//	Age:     21,
+	//	Address: "xian",
+	//}, []string{"name"})
+
+	//personDB.CreateInBatch(globalCtx, []*model.Person{
+	//	{Name: "sam"},
+	//	{Name: "mike"},
+	//	{Name: "tom"}},
+	//)
+
+	goCtx, _ := context.WithTimeout(globalCtx, time.Second)
+
+	personDB.Create(goCtx, &model.Person{
+		Name: "jerry",
+		Age:  22,
+	})
+
+	fmt.Println("main process")
+
+	select {}
+
 }
