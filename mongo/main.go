@@ -10,47 +10,61 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var (
+	database   = "nut-test"
+	collection = "u_level"
+)
+
 func main() {
-	// 设置 MongoDB 连接选项
-	clientOptions := options.Client().ApplyURI("mongodb://10.0.1.84:38077")
+	// 设置 MongoDB 客户端连接配置
+	clientOptions := options.Client().ApplyURI("mongodb://10.0.1.84:40077")
 
 	// 连接到 MongoDB
-	client, err := mongo.Connect(context.Background(), clientOptions)
+	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Disconnect(context.Background())
-
-	// 选择要操作的数据库和集合
-	db := client.Database("89t_im")
-
-	coll := db.Collection("group_info_250") // 获取 collection 实例
-
-	// 设置过滤条件
-	filter := bson.M{"group_id": 7}
-
-	// 设置更新操作
-	//fieldValue := map[string]interface{}{
-	//	"test": "jerry",
-	//	"ex": map[string]interface{}{
-	//		"name": "jack",
-	//	},
-	//}
-
-	fieldValue := map[string]interface{}{
-		"test":       "jerry",
-		"ex.field01": "value01",
-		"ex.field02": "value02",
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
 
-	updateCol := bson.M{"$set": fieldValue}
+	// 检查连接
+	err = client.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Fatalf("Failed to ping MongoDB: %v", err)
+	}
+	fmt.Println("Connected to MongoDB!")
+
+	// 选择数据库和集合
+	col := client.Database(database).Collection(collection)
+
+	// 定义要更新的文档过滤条件
+	filter := bson.M{"_id": "2001"}
+
+	// 在更新之前，查询并打印文档，以确保过滤条件正确匹配
+	var result bson.M
+	err = col.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		log.Fatalf("Failed to find document: %v", err)
+	}
+	fmt.Printf("Document before update: %+v\n", result)
+
+	// 定义更新操作
+	update := bson.M{
+		"$set": bson.M{
+			"lastLevelDataIdx": 0,
+		},
+	}
 
 	// 执行更新操作
-	result := coll.FindOneAndUpdate(context.Background(), filter, updateCol)
-	if result.Err() != nil {
-		log.Fatal(err)
+	updateResult, err := col.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		log.Fatalf("Failed to update document: %v", err)
 	}
 
-	// 输出更新结果
-	fmt.Println("更新完成")
+	fmt.Printf("Matched %v documents and modified %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
+
+	// 断开 MongoDB 连接
+	err = client.Disconnect(context.TODO())
+	if err != nil {
+		log.Fatalf("Failed to disconnect from MongoDB: %v", err)
+	}
+	fmt.Println("Disconnected from MongoDB.")
 }
