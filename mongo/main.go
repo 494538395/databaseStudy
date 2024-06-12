@@ -13,9 +13,11 @@ import (
 var (
 	database   = "nut-test"
 	collection = "u_level"
+
+	col *mongo.Collection
 )
 
-func main() {
+func init() {
 	// 设置 MongoDB 客户端连接配置
 	clientOptions := options.Client().ApplyURI("mongodb://10.0.1.84:40077")
 
@@ -33,25 +35,36 @@ func main() {
 	fmt.Println("Connected to MongoDB!")
 
 	// 选择数据库和集合
-	col := client.Database(database).Collection(collection)
+	col = client.Database(database).Collection(collection)
+}
 
+func main() {
+
+	deleteDoc("2001")
+
+}
+
+func updateDoc(docId string, updateFields map[string]interface{}) {
 	// 定义要更新的文档过滤条件
-	filter := bson.M{"_id": "2001"}
+	filter := bson.M{"_id": docId}
 
 	// 在更新之前，查询并打印文档，以确保过滤条件正确匹配
 	var result bson.M
-	err = col.FindOne(context.TODO(), filter).Decode(&result)
+	err := col.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
 		log.Fatalf("Failed to find document: %v", err)
 	}
 	fmt.Printf("Document before update: %+v\n", result)
 
 	// 定义更新操作
-	update := bson.M{
-		"$set": bson.M{
-			"lastLevelDataIdx": 0,
-		},
-	}
+	//update := bson.M{
+	//	"$set": bson.M{
+	//		"maxFinishLevelId": 0,
+	//	},
+	//}
+
+	// 将要更新的字段添加到更新操作中
+	update := bson.M{"$set": updateFields}
 
 	// 执行更新操作
 	updateResult, err := col.UpdateOne(context.TODO(), filter, update)
@@ -59,12 +72,17 @@ func main() {
 		log.Fatalf("Failed to update document: %v", err)
 	}
 
-	fmt.Printf("Matched %v documents and modified %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
+	fmt.Println("updateResult-->", updateResult)
+}
 
-	// 断开 MongoDB 连接
-	err = client.Disconnect(context.TODO())
+func deleteDoc(docId string) {
+	// 定义要更新的文档过滤条件
+	filter := bson.M{"_id": docId}
+
+	delResult, err := col.DeleteOne(context.TODO(), filter)
 	if err != nil {
-		log.Fatalf("Failed to disconnect from MongoDB: %v", err)
+		panic(err)
 	}
-	fmt.Println("Disconnected from MongoDB.")
+	fmt.Println("delResult.DeletedCount-->", delResult.DeletedCount)
+
 }
